@@ -235,12 +235,13 @@ def test_empty_test_case_no_results(default_test_case, subject_properties: Subje
 
         subprocess_executor = SubprocessTestCaseExecutor(subject_properties)
 
-        # Mock the connection to return no results
-        with patch("multiprocess.connection.Connection.poll", return_value=False):
+        # An empty test case must not start a subprocess, because its calculated
+        # timeout is zero and polling could return before the child process exits.
+        with patch.object(subprocess_executor, "_setup_subprocess_execution") as setup:
             exit_code = subprocess_executor.execute_with_exit_code(default_test_case)
 
-            # Should return 0 for empty test case
-            assert exit_code == 0
+        assert exit_code == 0
+        setup.assert_not_called()
 
 
 def test_non_empty_test_case_no_results(short_test_case, subject_properties: SubjectProperties):
