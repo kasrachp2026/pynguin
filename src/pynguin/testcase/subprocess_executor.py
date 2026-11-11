@@ -139,6 +139,11 @@ class SubprocessTestCaseExecutor(TestCaseExecutor):
         """
         self._before_remote_test_case_execution(test_case)
 
+        # An empty test case cannot execute SUT code. Avoid starting a subprocess
+        # that may not finish before the zero-second timeout expires.
+        if test_case.size() == 0:
+            return 0
+
         with ter.ExecutionRecorder(test_case):
             process, receiving_connection = self._setup_subprocess_execution(
                 (test_case,),
@@ -166,8 +171,6 @@ class SubprocessTestCaseExecutor(TestCaseExecutor):
                 if process.exitcode is None:
                     process.kill()
                     return None
-            elif test_case.size() == 0:
-                return 0
             else:
                 receiving_connection.close()
 
